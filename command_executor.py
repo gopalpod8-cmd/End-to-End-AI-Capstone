@@ -1,72 +1,66 @@
 import webbrowser
 import os
 import pyttsx3
+import psutil # You might need to: pip install psutil
 from datetime import datetime
 
-# Initialize the Voice Engine
 engine = pyttsx3.init()
 
-# Optional: Adjust the voice properties
-engine.setProperty('rate', 170)    # Speed (150-200 is natural)
-engine.setProperty('volume', 1.0)  # Volume (0.0 to 1.0)
-
 def speak(text):
-    """Utility function to make the AI speak."""
-    print(f"AI: {text}") # Still print to console for debugging
+    print(f"AI: {text}")
     engine.say(text)
     engine.runAndWait()
 
 def run_command(command_text):
-    """
-    The Command Executor 'Brain'. 
-    Maps user input to system actions.
-    """
-    command_text = command_text.lower()
+    query = command_text.lower()
     
-    # 1. WEB AUTOMATION
-    if "google" in command_text:
-        speak("Opening Google Chrome.")
-        webbrowser.open("https://www.google.com")
-        return "Action Complete: Browser Opened."
+    # --- 1. DYNAMIC WEB SEARCH ---
+    if "search for" in query:
+        search_term = query.replace("search for", "").strip()
+        speak(f"Searching Google for {search_term}")
+        webbrowser.open(f"https://www.google.com/search?q={search_term}")
+        return f"Searched for: {search_term}"
 
-    elif "linkedin" in command_text:
-        speak("Opening your LinkedIn profile. Good luck with the networking!")
-        webbrowser.open("https://www.linkedin.com/in/your-profile-link") # Replace with your link
-        return "Action Complete: LinkedIn Opened."
+    elif "play" in query:
+        song = query.replace("play", "").strip()
+        speak(f"Opening YouTube to play {song}")
+        webbrowser.open(f"https://www.youtube.com/results?search_query={song}")
+        return f"Playing: {song} on YouTube"
 
-    elif "github" in command_text:
-        speak("Accessing your GitHub repositories.")
-        webbrowser.open("https://github.com/") # Replace with your link
-        return "Action Complete: GitHub Opened."
+    # --- 2. SYSTEM STATUS (Intelligence) ---
+    elif "battery" in query:
+        battery = psutil.sensors_battery()
+        percent = battery.percent
+        speak(f"The system battery is at {percent} percent.")
+        return f"Battery: {percent}%"
 
-    # 2. SYSTEM UTILITIES
-    elif "time" in command_text:
+    elif "cpu" in query:
+        usage = psutil.cpu_percent()
+        speak(f"Current CPU usage is at {usage} percent.")
+        return f"CPU Usage: {usage}%"
+
+    # --- 3. DYNAMIC APP OPENING ---
+    elif "open" in query:
+        app_name = query.replace("open", "").strip()
+        
+        if "chrome" in app_name:
+            os.startfile("chrome.exe") # Assumes Chrome is in PATH
+            speak("Opening Chrome")
+        elif "code" in app_name or "vs code" in app_name:
+            os.system("code")
+            speak("Opening Visual Studio Code")
+        else:
+            # Fallback to search if it's not a known app
+            speak(f"I don't have a shortcut for {app_name}, opening it in Google.")
+            webbrowser.open(f"https://www.google.com/search?q={app_name}")
+        return f"Tried to open {app_name}"
+
+    # --- 4. DEFAULT COMMANDS ---
+    elif "time" in query:
         now = datetime.now().strftime("%I:%M %p")
-        speak(f"The current time is {now}.")
-        return f"Reported Time: {now}"
+        speak(f"It is currently {now}")
+        return f"Time: {now}"
 
-    elif "calculator" in command_text:
-        speak("Launching the system calculator.")
-        os.system("calc")
-        return "Action Complete: Calculator Launched."
-
-    elif "notepad" in command_text:
-        speak("Opening Notepad for your notes.")
-        os.system("notepad")
-        return "Action Complete: Notepad Launched."
-
-    # 3. EXIT COMMAND
-    elif "shutdown" in command_text or "exit" in command_text:
-        speak("System shutting down. Goodbye Gopal.")
-        return "EXIT"
-
-    # 4. FALLBACK
     else:
-        speak("Command received, but I don't have a specific rule for that action yet.")
-        return "Unknown Command."
-
-if __name__ == "__main__":
-    # Test block to run this module independently
-    print("Testing Command Executor (Voice Enabled)...")
-    test_cmd = input("Enter test command: ")
-    run_command(test_cmd)
+        speak("Command processed, but no specific action mapped.")
+        return "Action: Generic Process"
