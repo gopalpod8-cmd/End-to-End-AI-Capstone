@@ -1,0 +1,5 @@
+__pycache__
+.pyc
+intruders
+authorized_usersme
+.env
